@@ -1,35 +1,40 @@
 [main]
 Class="Function"
 Prototype="int main(int argc, char *argv[]);"
-SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:64:5"
+SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:66:5"
 
 [panelCB]
 Class="Function"
 Prototype="int panelCB(int panel, int event, void *callbackData, int eventData1, int eventData2);"
-SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:88:17"
+SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:90:17"
 
 [bye]
 Class="Function"
 Prototype="int bye(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
-SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:97:17"
+SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:99:17"
 
 [initializeDAQ]
 Class="Function"
 Prototype="int initializeDAQ();"
-SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:110:5"
+SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:112:5"
 
 [plot]
 Class="Function"
-Prototype="void plot();"
-SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:127:6"
+Prototype="void plot(int dataBuffer[]);"
+SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:129:6"
 
-[collect]
+[collectEdgeSeperations]
 Class="Function"
-Prototype="void collect(unsigned int *dataBuffer);"
-SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:137:6"
+Prototype="void collectEdgeSeperations(int dataBuffer[]);"
+SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:139:6"
+
+[recordCountsPerMin]
+Class="Function"
+Prototype="void recordCountsPerMin(void *_);"
+SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:166:6"
 
 [doRun]
 Class="Function"
 Prototype="int doRun(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
-SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:166:17"
+SourceLocation="c:\Users\sherazi.n\Desktop\Muon Collector\MuonCollector.c:221:17"
 

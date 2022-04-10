@@ -1,7 +1,7 @@
 //==============================================================================
 //
 // Title:		MuonCollector
-// Purpose:		A short description of the application.
+// Purpose:		Collects muons.
 //
 // Created on:	4/8/2022 at 2:23:52 PM by .
 // Copyright:	. All Rights Reserved.
@@ -18,6 +18,7 @@
 #include "MuonCollector.h"
 #include "toolbox.h"
 #include <stdbool.h>
+#include <time.h>
 
 //==============================================================================
 // Constants
@@ -44,6 +45,7 @@ static bool isInitialized = false;
 static CmtThreadFunctionID collectionThreadFnId;
 static bool isRunning = false;
 
+static uint32_t edgeCount = 0;
 static uint32_t dataBuffer[BUFFER_SIZE];
 
 static int plotHandle;
@@ -112,11 +114,11 @@ int initializeDAQ() {
 	// Initialize task handle
 	error = error || DAQmxCreateTask("Muon Collection", &collectionTask);
 	// Create channel to count number of rising edges
-	error = error || DAQmxCreateCICountEdgesChan(collectionTask, "Dev1/ctr1", "Rising Edge Counter", DAQmx_Val_Rising, 0, DAQmx_Val_CountUp);
+	error = error || DAQmxCreateCICountEdgesChan(collectionTask, "/Dev1/ctr1", "Rising Edge Counter", DAQmx_Val_Rising, 0, DAQmx_Val_CountUp);
 	// Create channel to count seperation between rising edges
-	// error = error || DAQmxCreateCITwoEdgeSepChan (collectionTask, "Dev1/ctr0", "Edge Seperation", MIN_EXPECTED_EDGE_SEP, MAX_EXPECTED_EDGE_SEP, DAQmx_Val_Seconds, DAQmx_Val_Rising, DAQmx_Val_Rising, NULL);
-	// Configure sample clock timing
-	error = error || DAQmxCfgSampClkTiming(collectionTask, "/Dev1/PFI9", SAMPLING_RATE, DAQmx_Val_Rising, DAQmx_Val_ContSamps, BUFFER_SIZE);
+	error = error || DAQmxCreateCITwoEdgeSepChan (collectionTask, "Dev1/ctr0", "Edge Seperation", MIN_EXPECTED_EDGE_SEP, MAX_EXPECTED_EDGE_SEP, DAQmx_Val_Seconds, DAQmx_Val_Rising, DAQmx_Val_Rising, NULL);
+	// Configure sample clock timing. PFI3 is default for CTR1.
+	error = error || DAQmxCfgSampClkTiming(collectionTask, "/Dev1/PFI3", SAMPLING_RATE, DAQmx_Val_Rising, DAQmx_Val_ContSamps, BUFFER_SIZE);
 	if (!error) {
 		isInitialized = true;
 	}
@@ -124,7 +126,7 @@ int initializeDAQ() {
 }
 
 // Do plot
-void plot() {
+void plot(int dataBuffer[]) {
 	// Plot
 	if (!plotHandle) {
 		plotHandle = PlotY(panelHandle, PANEL_GRAPH, dataBuffer, BUFFER_SIZE, VAL_SHORT_INTEGER, VAL_THIN_LINE, VAL_EMPTY_SQUARE, VAL_SOLID, 1, VAL_RED);
@@ -134,21 +136,23 @@ void plot() {
 	}
 }
 
-void collect(uint32_t *dataBuffer) {
+void collectEdgeSeperations(int dataBuffer[]) {
 	// Start task
-	DebugPrintf("Running collection in seperate thread\n");
+	DebugPrintf("Starting collection in thread %i\n", CmtGetCurrentThreadID());
 	DAQmxStartTask(collectionTask);
 	int read = 0;
 	bool done = false;
+	float64 count = 0;
 	while(!done) {
-		DAQmxReadCounterU32(collectionTask, BUFFER_SIZE, 1, dataBuffer, BUFFER_SIZE, &read, NULL);
-		plot();
-	 	// DAQmxReadCounterF64(taskHandle,5000,Timespan,data,5000,&read,NULL);
+		DAQmxReadCounterScalarF64(collectionTask, 1200, &count, NULL);
+		DebugPrintf("Read %i samples\n", read);
+		plot(dataBuffer);
 		
 		// Check if we should stop
 		int lockObtained = 0;
 		CmtGetLockEx(stopLockHandle, 1, CMT_WAIT_FOREVER, &lockObtained);
 		if (lockObtained) {
+			DebugPrintf("Obtained lock to check stop request\n");
 			done = requestStopRunning;
 			if (done) {
 				DebugPrintf("Received request to stop running early\n");
@@ -158,8 +162,60 @@ void collect(uint32_t *dataBuffer) {
 	}
 	DebugPrintf("Stopping collection task\n");
 	DAQmxStopTask(collectionTask);
-	
 }
+
+void recordCountsPerMin(void *_) {
+	// Start task
+	DebugPrintf("Starting collection in thread %i\n", CmtGetCurrentThreadID());
+	DAQmxStartTask(collectionTask);
+	bool done = false;
+	
+	uint32_t count = 0;
+	
+	unsigned long startTime = time(NULL);
+	unsigned long currentTime = time(NULL);
+	
+	double countsPerMinute = 0.00;
+	
+	while (!done) {
+		// Get counter count
+		DAQmxReadCounterScalarU32(collectionTask, 60, &count, NULL);
+		
+		// Get current time
+		currentTime = time(NULL);
+
+		// Reset and update every minute
+		if (currentTime - startTime > 60) {
+			unsigned long delta = currentTime - startTime;
+			if (delta != 0) {
+				countsPerMinute = count / (long double)delta;
+			}
+			// Update count display
+			char displayText[1000];
+			sprintf(displayText, "COUNTS/MIN: %d", count);
+			SetCtrlAttribute(panelHandle, PANEL_COUNT_DISPLAY, ATTR_CTRL_VAL, displayText);
+			// Reset counter
+			count = 0;
+			startTime = time(NULL);
+		}
+		
+		// Check if we should stop
+		int lockObtained = 0;
+		CmtGetLockEx(stopLockHandle, 1, CMT_WAIT_FOREVER, &lockObtained);
+		if (lockObtained) {
+			DebugPrintf("Obtained lock to check stop request\n");
+			done = requestStopRunning;
+			if (done) {DebugPrintf("Received request to stop running early\n");}
+			CmtReleaseLock(stopLockHandle);
+		}
+	}
+
+	// Stop task
+	DebugPrintf("Stopping collection task\n");
+	DAQmxStopTask(collectionTask);
+}
+
+
 
 
 // Starts collection
@@ -187,7 +243,7 @@ int CVICALLBACK doRun (int panel, int control, int event,
 				
 				// Start the task
 				DebugPrintf("Requesting thread function from pool\n");
-				int error = CmtScheduleThreadPoolFunction(DEFAULT_THREAD_POOL_HANDLE, collect, dataBuffer, &collectionThreadFnId);
+				int error = CmtScheduleThreadPoolFunction(DEFAULT_THREAD_POOL_HANDLE, recordCountsPerMin, NULL, &collectionThreadFnId);
 				DebugPrintf("Thread function requested, continuing\n");
 				if (!error) {
 					// Change button text

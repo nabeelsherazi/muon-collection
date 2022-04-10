@@ -20,6 +20,7 @@
 #define  PANEL_STATUS                     5       /* control type: textMsg, callback function: (none) */
 #define  PANEL_GRAPH                      6       /* control type: graph, callback function: (none) */
 #define  PANEL_COUNT_DISPLAY              7       /* control type: textMsg, callback function: (none) */
+#define  PANEL_TIMER                      8       /* control type: textMsg, callback function: (none) */
 
 
      /* Control Arrays: */

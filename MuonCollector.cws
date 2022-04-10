@@ -30,7 +30,7 @@ Save Changes Before Compiling = "Always"
 Hide Windows = False
 Break At First Statement = False
 Sort Type = "File Name"
-Number of Opened Files = 6
+Number of Opened Files = 3
 Window Confinement Region Enabled = True
 MainColumnWidth = 272
 FileDateColumnWidth = 70
@@ -48,23 +48,23 @@ Batch Build Debug = False
 [File 0001]
 Path = "/c/Users/sherazi.n/Desktop/Muon Collector/MuonCollector.uir"
 File Type = "User Interface Resource"
-Disk Date = 3732294732
+Disk Date = 3732468664
 In Projects = "1,"
 Window Top = 33
 Window Left = 10
 Window Height = 266
 Window Width = 518
-Window Z-Order = 2
+Window Z-Order = 3
 
 [File 0002]
 Path = "/c/Users/sherazi.n/Desktop/Muon Collector/MuonCollector.c"
 File Type = "CSource"
-Disk Date = 3732298147
+Disk Date = 3732474462
 In Projects = "1,"
-Source Window State = "1,160,160,160,4,4,4,0,0,0,0,0,0,0,0,0,173,0,160,4,401,672,1,0,"
+Source Window State = "1,120,120,120,21,140,21,0,3,0,0,0,0,0,0,0,96,0,120,140,401,672,1,0,"
 Window Top = 33
 Window Left = 10
-Window Z-Order = 1
+Window Z-Order = 2
 
 [Tab Order]
 Tab 0001 = "/c/Users/sherazi.n/Desktop/Muon Collector/MuonCollector.uir"
