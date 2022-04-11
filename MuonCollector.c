@@ -95,7 +95,7 @@ int CVICALLBACK panelCB (int panel, int event, void *callbackData,
 	return 0;
 }
 
-// Clear tasks and quit
+/// Clear tasks and quit
 int CVICALLBACK bye (int panel, int control, int event,
 					 void *callbackData, int eventData1, int eventData2)
 {
@@ -109,24 +109,26 @@ int CVICALLBACK bye (int panel, int control, int event,
 	return 0;
 }
 
-int initializeDAQ() {
-	int error = 0;
-	// Initialize task handle
-	error = error || DAQmxCreateTask("Muon Collection", &collectionTask);
-	// Create channel to count number of rising edges
-	error = error || DAQmxCreateCICountEdgesChan(collectionTask, "/Dev1/ctr1", "Rising Edge Counter", DAQmx_Val_Rising, 0, DAQmx_Val_CountUp);
-	// Create channel to count seperation between rising edges
-	error = error || DAQmxCreateCITwoEdgeSepChan (collectionTask, "Dev1/ctr0", "Edge Seperation", MIN_EXPECTED_EDGE_SEP, MAX_EXPECTED_EDGE_SEP, DAQmx_Val_Seconds, DAQmx_Val_Rising, DAQmx_Val_Rising, NULL);
-	// Configure sample clock timing. PFI3 is default for CTR1.
-	error = error || DAQmxCfgSampClkTiming(collectionTask, "/Dev1/PFI3", SAMPLING_RATE, DAQmx_Val_Rising, DAQmx_Val_ContSamps, BUFFER_SIZE);
-	if (!error) {
-		isInitialized = true;
-	}
-	return error;
+//==============================================================================
+// UI setters
+
+/// Sets panel control with ID `controlId` to text value
+void setText(int controlId, char text[]) {
+	SetCtrlAttribute(panelHandle, controlId, ATTR_CTRL_VAL, text);
 }
 
-// Do plot
-void plot(int dataBuffer[]) {
+/// Sets panel button control with ID `controlId` to text value
+void setButtonText(int controlId, char text[]) {
+	SetCtrlAttribute(panelHandle, controlId, ATTR_LABEL_TEXT, text);
+}
+
+/// Sets panel control with ID `controlId` to color value
+void setColor(int controlId, int color) {
+	SetCtrlAttribute(panelHandle, PANEL_STATUS, ATTR_TEXT_COLOR, color);
+}
+
+/// Update plot from buffer
+void updatePlot(int dataBuffer[]) {
 	// Plot
 	if (!plotHandle) {
 		plotHandle = PlotY(panelHandle, PANEL_GRAPH, dataBuffer, BUFFER_SIZE, VAL_SHORT_INTEGER, VAL_THIN_LINE, VAL_EMPTY_SQUARE, VAL_SOLID, 1, VAL_RED);
@@ -134,6 +136,43 @@ void plot(int dataBuffer[]) {
 	else {
 		SetPlotAttribute(panelHandle, PANEL_GRAPH, plotHandle, ATTR_PLOT_YDATA, (void*)dataBuffer);
 	}
+}
+
+//==============================================================================
+// UI getters
+
+int getCountType() {
+	int countType = 0;
+	GetCtrlVal(panelHandle, PANEL_COUNT_TYPE, &countType);
+	return countType;
+}
+
+//==============================================================================
+// Data saving functions
+
+void writeDataToFile() {
+	// Write data to file
+}
+
+
+
+//==============================================================================
+// Data functions
+
+int initializeDAQ() {
+	int error = 0;
+	// Initialize task handle
+	error = error || DAQmxCreateTask("Muon Collection", &collectionTask);
+	// Create channel to count number of rising edges
+	error = error || DAQmxCreateCICountEdgesChan(collectionTask, "/Dev1/ctr1", "Rising Edge Counter", DAQmx_Val_Rising, 0, DAQmx_Val_CountUp);
+	// Create channel to count seperation between rising edges
+	error = error || DAQmxCreateCITwoEdgeSepChan (collectionTask, "/Dev1/ctr0", "Edge Seperation", MIN_EXPECTED_EDGE_SEP, MAX_EXPECTED_EDGE_SEP, DAQmx_Val_Seconds, DAQmx_Val_Rising, DAQmx_Val_Rising, NULL);
+	// Configure sample clock timing. PFI3 is default for CTR1.
+	error = error || DAQmxCfgSampClkTiming(collectionTask, "/Dev1/PFI3", SAMPLING_RATE, DAQmx_Val_Rising, DAQmx_Val_ContSamps, BUFFER_SIZE);
+	if (!error) {
+		isInitialized = true;
+	}
+	return error;
 }
 
 void collectEdgeSeperations(int dataBuffer[]) {
@@ -203,7 +242,6 @@ void recordCountsPerMin(void *_) {
 		int lockObtained = 0;
 		CmtGetLockEx(stopLockHandle, 1, CMT_WAIT_FOREVER, &lockObtained);
 		if (lockObtained) {
-			DebugPrintf("Obtained lock to check stop request\n");
 			done = requestStopRunning;
 			if (done) {DebugPrintf("Received request to stop running early\n");}
 			CmtReleaseLock(stopLockHandle);
@@ -216,9 +254,10 @@ void recordCountsPerMin(void *_) {
 }
 
 
+//==============================================================================
+// UI callback functions
 
-
-// Starts collection
+/// Starts collection
 int CVICALLBACK doRun (int panel, int control, int event,
 					   void *callbackData, int eventData1, int eventData2)
 {
@@ -231,24 +270,24 @@ int CVICALLBACK doRun (int panel, int control, int event,
 				// Initialize the task if needed
 				if (!isInitialized) {
 					int error = initializeDAQ();
+					// Set status indicator
 					if (!error) {
-						SetCtrlAttribute (panel, PANEL_STATUS, ATTR_CTRL_VAL, "Status: Initialized");
-						SetCtrlAttribute (panel, PANEL_STATUS, ATTR_TEXT_COLOR, VAL_GREEN);
+						setText(PANEL_STATUS, "Status: Initialized");
+						setColor(PANEL_STATUS, VAL_GREEN);
 					}
 					else {
-						SetCtrlAttribute (panel, PANEL_STATUS, ATTR_CTRL_VAL, "Status: Failed to Initialize");
-						SetCtrlAttribute (panel, PANEL_STATUS, ATTR_TEXT_COLOR, VAL_RED);
+						setText(PANEL_STATUS, "Status: Failed to Initialize");
+						setColor(PANEL_STATUS, VAL_RED);
 					}
 				}
 				
-				// Start the task
-				DebugPrintf("Requesting thread function from pool\n");
+				// Schedule the task to begin in a thread pool
 				int error = CmtScheduleThreadPoolFunction(DEFAULT_THREAD_POOL_HANDLE, recordCountsPerMin, NULL, &collectionThreadFnId);
-				DebugPrintf("Thread function requested, continuing\n");
+				
+				// Change button text
 				if (!error) {
-					// Change button text
 					isRunning = true;
-					SetCtrlAttribute(panel, PANEL_RUN, ATTR_LABEL_TEXT, "Stop Running");
+					setButtonText(PANEL_RUN, "Stop Running");
 				}
 			}
 			
@@ -264,7 +303,7 @@ int CVICALLBACK doRun (int panel, int control, int event,
 				
 				// Change button text back
 				isRunning = false;
-				SetCtrlAttribute(panel, PANEL_RUN, ATTR_LABEL_TEXT, "Run");
+				setButtonText(PANEL_RUN, "Run");
 			}
 
 			break;

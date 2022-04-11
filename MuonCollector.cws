@@ -1,21 +1,21 @@
 [Workspace Header]
 Version = 2000
-Pathname = "/c/Users/sherazi.n/Desktop/Muon Collector/MuonCollector.cws"
+Pathname = "/c/Users/nxtfa/source/muon-collection/MuonCollector.cws"
 CVI Dir = "/c/program files (x86)/national instruments/cvi2020"
 CVI Shared Dir = "/C/Program Files (x86)/National Instruments/Shared/CVI"
 CVI Pub Local Dir = "/C/ProgramData/National Instruments/CVI2020"
 CVI Pub Global Dir = "/C/ProgramData/National Instruments/CVI"
-IVI Standard Root Dir = "/C/Program Files (x86)/IVI Foundation/IVI"
+IVI Standard Root Dir = "/c/Program Files/IVI Foundation/IVI"
 IVI Standard Root 64-bit Dir = "/C/Program Files/IVI Foundation/IVI"
 VXIplug&play Framework Dir = "/C/Program Files (x86)/IVI Foundation/VISA/winnt"
 VXIplug&play Framework 64-bit Dir = "/C/Program Files/IVI Foundation/VISA/win64"
 Number of Projects = 1
 Active Project = 1
 Project 0001 = "MuonCollector.prj"
-Drag Bar Left = 289
-Window Top = 254
+Drag Bar Left = 224
+Window Top = 64
 Window Left = 26
-Window Bottom = 756
+Window Bottom = 566
 Window Right = 816
 Maximized = True
 Maximized Children = True
@@ -32,7 +32,7 @@ Break At First Statement = False
 Sort Type = "File Name"
 Number of Opened Files = 3
 Window Confinement Region Enabled = True
-MainColumnWidth = 272
+MainColumnWidth = 207
 FileDateColumnWidth = 70
 FileSizeColumnWidth = 70
 
@@ -46,29 +46,29 @@ Batch Build Release = False
 Batch Build Debug = False
 
 [File 0001]
-Path = "/c/Users/sherazi.n/Desktop/Muon Collector/MuonCollector.uir"
+Path = "/c/Users/nxtfa/source/muon-collection/MuonCollector.uir"
 File Type = "User Interface Resource"
-Disk Date = 3732468664
+Disk Date = 3732492400
 In Projects = "1,"
 Window Top = 33
 Window Left = 10
 Window Height = 266
 Window Width = 518
-Window Z-Order = 3
+Window Z-Order = 1
 
 [File 0002]
-Path = "/c/Users/sherazi.n/Desktop/Muon Collector/MuonCollector.c"
+Path = "/c/Users/nxtfa/source/muon-collection/MuonCollector.c"
 File Type = "CSource"
-Disk Date = 3732474462
+Disk Date = 3732491250
 In Projects = "1,"
-Source Window State = "1,120,120,120,21,140,21,0,3,0,0,0,0,0,0,0,96,0,120,140,401,672,1,0,"
+Source Window State = "1,156,156,156,0,0,0,0,0,0,0,0,0,0,0,0,122,0,156,0,401,672,1,0,"
 Window Top = 33
 Window Left = 10
 Window Z-Order = 2
 
 [Tab Order]
-Tab 0001 = "/c/Users/sherazi.n/Desktop/Muon Collector/MuonCollector.uir"
-Tab 0002 = "/c/Users/sherazi.n/Desktop/Muon Collector/MuonCollector.c"
+Tab 0001 = "/c/Users/nxtfa/source/muon-collection/MuonCollector.uir"
+Tab 0002 = "/c/Users/nxtfa/source/muon-collection/MuonCollector.c"
 
 [Default Build Config 0001 Debug]
 Generate Browse Info = True
