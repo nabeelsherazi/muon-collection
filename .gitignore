@@ -1,0 +1,7 @@
+//CVI gitignore
+
+*.txt
+
+// Build artifacts
+cvibuild**
+*.exe

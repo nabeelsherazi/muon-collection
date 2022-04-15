@@ -20,7 +20,6 @@
 #include "toolbox.h"
 #include <stdbool.h>
 #include <time.h>
-#include <float.h>
 
 //==============================================================================
 // Constants
@@ -30,7 +29,7 @@
 #define TIMEOUT 120
 #define DEFAULT_MIN_EXPECTED_EDGE_SEP 5E-7 // sec
 #define DEFAULT_MAX_EXPECTED_EDGE_SEP 1E-5 // sec
-#define CHECKPOINT_FREQUENCY 10 // decays
+#define CHECKPOINT_FREQUENCY 1 // decays
 #define DECAYS_TO_COLLECT 1000 // decays
 
 //==============================================================================
@@ -227,7 +226,7 @@ void writeDataToFile() {
 
 	for (int i = 0; i < numDecays; i++) {
 		struct DecayRecord record = dataBuffer[i];
-		sprintf(lineBuffer, "%.17g,%.17g", record.Timestamp, record.Lifetime);
+		sprintf(lineBuffer, "%.*e,%.*e", DECIMAL_DIG, record.Timestamp, record.Lifetime);
 		numBytesWritten += WriteLine(fh, lineBuffer, -1);
 		FillBytes(lineBuffer, 0, 1024, 0);
 	}
@@ -295,16 +294,12 @@ void recordMuonDecays() {
 			record.Timestamp = timeStamp;
 			dataBuffer[numDecays] = record;
 			numDecays++;
-			//Update decay count display
-			//setText(PANEL_DECAY_COUNT, numDecays);
 			// If checkpoint, write out data
 			if (numDecays % CHECKPOINT_FREQUENCY == 0) {
 				writeDataToFile();
 			}
 			// If collected required number of decays, done
-			if (numDecays >= DECAYS_TO_COLLECT) {
-				done = true;
-			}
+			if (numDecays >= NUM
 		}
 		
 		// Update plot
@@ -314,14 +309,13 @@ void recordMuonDecays() {
 		int lockObtained = 0;
 		CmtGetLockEx(stopLockHandle, 1, CMT_WAIT_FOREVER, &lockObtained);
 		if (lockObtained) {
-			if (requestStopRunning) {
+			done = requestStopRunning;
+			if (done) {
 				DebugPrintf("Received request to stop running early\n");
 			}
-			done = done || requestStopRunning;
 			CmtReleaseLock(stopLockHandle);
 		}
 	}
-	
 	DebugPrintf("Stopping collection task\n");
 	
 	// Dim back on
