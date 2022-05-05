@@ -11,6 +11,7 @@
 //==============================================================================
 // Include files
 
+#include <advanlys.h>
 #include <formatio.h>
 #include <NIDAQmx.h>
 #include <ansi_c.h>
@@ -148,17 +149,56 @@ void setColor(int controlId, int color) {
 
 /// Sets LED
 void setLed(int controlId, bool on) {
-	
+	SetCtrlAttribute(panelHandle, controlId, ATTR_CTRL_VAL, on);
 }
 
-/// Update plot from buffer
-void updatePlot(int dataBuffer[]) {
+/// Turns LED on for 1 second, then off
+void blinkLed() {
+	setLed(PANEL_MUON_LED, true);
+	Delay(1);
+	setLed(PANEL_MUON_LED, false);
+}
+
+/// Set dim
+void setDim(int controlId, bool dimmed) {
+	SetCtrlAttribute(panelHandle, controlId, ATTR_DIMMED, dimmed);
+}
+
+/// Update histogram plot from buffer
+void updateHistogram() {
+	// Convert decay record data buffer to just the decay lifetimes, and get the maximum
+	double decayLifetimes[numDecays];
+	double maximum = 0.0;
+	for (int i = 0; i < numDecays; i++) {
+		double a = dataBuffer[i].Lifetime;
+		decayLifetimes[i] = a;
+		if (a > maximum) {
+			maximum = a;
+		}
+	}
+	
+	// Output
+	int hist[numDecays];
+	double ax[numDecays];
+	
+	// Square root binning
+	double bucketSize = pow(numDecays, 0.5);
+	
+	// Calculate
+	int error = Histogram(decayLifetimes, numDecays, 0.0, maximum, hist, ax, bucketSize);
+	
+	if (error) {
+		ErrorPrintf("Unable to calculate histogram\n");
+		return;
+	}
+	
 	// Plot
 	if (!plotHandle) {
-		plotHandle = PlotY(panelHandle, PANEL_GRAPH, dataBuffer, BUFFER_SIZE, VAL_SHORT_INTEGER, VAL_THIN_LINE, VAL_EMPTY_SQUARE, VAL_SOLID, 1, VAL_RED);
+		plotHandle = PlotXY(panelHandle, PANEL_GRAPH, ax, hist, numDecays, VAL_DOUBLE, VAL_INTEGER, VAL_VERTICAL_BAR, VAL_EMPTY_SQUARE, VAL_SOLID, 1, VAL_RED);
 	}
 	else {
-		SetPlotAttribute(panelHandle, PANEL_GRAPH, plotHandle, ATTR_PLOT_YDATA, (void*)dataBuffer);
+		SetPlotAttribute(panelHandle, PANEL_GRAPH, plotHandle, ATTR_PLOT_YDATA, (void*)hist);
+		SetPlotAttribute(panelHandle, PANEL_GRAPH, plotHandle, ATTR_PLOT_XDATA, (void*)ax);
 	}
 }
 
@@ -181,10 +221,6 @@ double getDouble(int controlId) {
 	double value = 0.00;
 	GetCtrlVal(panelHandle, controlId, &value);
 	return value;
-}
-
-void setDim(int controlId, bool dimmed) {
-	SetCtrlAttribute(panelHandle, controlId, ATTR_DIMMED, dimmed);
 }
 
 //==============================================================================
@@ -295,8 +331,10 @@ void recordMuonDecays() {
 			record.Timestamp = timeStamp;
 			dataBuffer[numDecays] = record;
 			numDecays++;
-			//Update decay count display
+			// TODO: Update decay count display
 			//setText(PANEL_DECAY_COUNT, numDecays);
+			// TODO: Light up LED for 1 second
+			//CmtScheduleThreadPoolFunction(DEFAULT_THREAD_POOL_HANDLE, blinkLed, NULL, NULL);
 			// If checkpoint, write out data
 			if (numDecays % CHECKPOINT_FREQUENCY == 0) {
 				writeDataToFile();
@@ -308,7 +346,7 @@ void recordMuonDecays() {
 		}
 		
 		// Update plot
-		//updatePlot(dataBuffer);
+		updateHistogram();
 		
 		// Check if we should stop
 		int lockObtained = 0;
